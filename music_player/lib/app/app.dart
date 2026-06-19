@@ -5,7 +5,6 @@ import 'package:music_player/features/albums/albums_screen.dart';
 import 'package:music_player/features/artists/artists_screen.dart';
 import 'package:music_player/features/playlists/playlists_screen.dart';
 import 'package:music_player/features/search/search_screen.dart';
-import 'package:music_player/features/settings/settings_screen.dart';
 import 'package:music_player/widgets/mini_player.dart';
 
 class App extends ConsumerStatefulWidget {
@@ -44,15 +43,6 @@ class _AppState extends ConsumerState<App> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const SearchScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
             },
           ),

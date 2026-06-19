@@ -15,11 +15,19 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
+  final _focusNode = FocusNode();
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.requestFocus();
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -29,83 +37,75 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final currentIndex = ref.watch(currentIndexProvider).valueOrNull;
     final theme = Theme.of(context);
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: TextField(
-            controller: _searchController,
-            autofocus: false,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Search songs, artists, albums...',
-              hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-              prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurfaceVariant),
-              suffixIcon: _query.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: theme.colorScheme.onSurfaceVariant),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() => _query = '');
-                      },
-                    )
-                  : null,
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            onChanged: (value) {
-              setState(() => _query = value);
-            },
+    return Scaffold(
+      appBar: AppBar(
+        title: TextField(
+          controller: _searchController,
+          focusNode: _focusNode,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Search songs, artists, albums...',
+            hintStyle: TextStyle(color: Colors.grey),
+            border: InputBorder.none,
           ),
+          onChanged: (value) {
+            setState(() => _query = value);
+          },
         ),
-        Expanded(
-          child: _query.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.search, size: 64, color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(height: 16),
-                      Text('Search your music library', style: theme.textTheme.bodyLarge),
-                    ],
-                  ),
-                )
-              : resultsAsync.when(
-                  data: (results) {
-                    if (results.isEmpty) {
-                      return Center(
-                        child: Text('No results for "$_query"', style: theme.textTheme.bodyMedium),
-                      );
-                    }
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: results.length,
-                      itemBuilder: (context, index) {
-                        final song = results[index];
-                        return SongTile(
-                          song: song,
-                          index: index,
-                          isPlaying: currentIndex == index,
-                          onTap: () async {
-                            final handler = ref.read(handlerProvider);
-                            handler.disableShuffle();
-                            await handler.setSongs(results, initialIndex: index);
-                            handler.play();
-                          },
-                          onAddToPlaylist: () => _addToPlaylist(context, ref, song),
-                        );
-                      },
-                    );
-                  },
-                  error: (error, _) => Center(child: Text('Error: $error')),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+        actions: [
+          if (_query.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                _searchController.clear();
+                setState(() => _query = '');
+              },
+            ),
+        ],
+      ),
+      body: SafeArea(
+        child: _query.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search, size: 64, color: theme.colorScheme.onSurfaceVariant),
+                    const SizedBox(height: 16),
+                    Text('Search your music library', style: theme.textTheme.bodyLarge),
+                  ],
                 ),
-        ),
-      ],
+              )
+            : resultsAsync.when(
+                data: (results) {
+                  if (results.isEmpty) {
+                    return Center(
+                      child: Text('No results for "$_query"', style: theme.textTheme.bodyMedium),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: results.length,
+                    itemBuilder: (context, index) {
+                      final song = results[index];
+                      return SongTile(
+                        song: song,
+                        index: index,
+                        isPlaying: currentIndex == index,
+                        onTap: () async {
+                          final handler = ref.read(handlerProvider);
+                          handler.disableShuffle();
+                          await handler.setSongs(results, initialIndex: index);
+                          handler.play();
+                        },
+                        onAddToPlaylist: () => _addToPlaylist(context, ref, song),
+                      );
+                    },
+                  );
+                },
+                error: (error, _) => Center(child: Text('Error: $error')),
+                loading: () => const Center(child: CircularProgressIndicator()),
+              ),
+      ),
     );
   }
 
