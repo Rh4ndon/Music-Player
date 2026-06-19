@@ -43,6 +43,10 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name="com.musicplayer.music_player.MechanicalLightBridge"
+            android:exported="false" />
+
         <receiver
             android:name="com.ryanheise.audioservice.MediaButtonReceiver"
             android:exported="true"
